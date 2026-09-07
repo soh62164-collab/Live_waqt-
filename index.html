@@ -154,6 +154,7 @@
     margin-top:14px;
   }
   .locate-btn:active{ opacity:0.85; }
+  .locate-btn:disabled{ opacity:0.65; cursor:wait; }
   .locate-btn.on{
     background:transparent;
     border:1px solid var(--gold);
@@ -345,7 +346,6 @@
       </div>
     </div>
   </div>
-  </div>
 
   <div class="sun-row">
     <div class="sun-item">
@@ -494,7 +494,9 @@ async function fetchTimings(lat, lon){
   const url = `https://api.aladhan.com/v1/timings/${ts}?latitude=${lat}&longitude=${lon}&method=1`;
   try{
     const res = await fetch(url);
+    if (!res.ok) throw new Error(`Timing API returned ${res.status}`);
     const data = await res.json();
+    if (!data.data || !data.data.timings) throw new Error('Timing data is missing');
     timings = data.data.timings;
     locationTZ = data.data.meta.timezone || 'Asia/Dhaka';
     lastFetchedDate = dateStringForTZ(locationTZ);
@@ -561,17 +563,20 @@ function requestLiveLocation(){
     statusLine.textContent = 'এই ব্রাউজারে লোকেশন সাপোর্ট নেই — নিচে শহরের নাম লিখে খুঁজুন।';
     return;
   }
-  if (window.isSecureContext === false){
-    statusLine.textContent = 'এই পেজ থেকে সরাসরি লোকেশন কাজ নাও করতে পারে — নিচে শহরের নাম লিখে খুঁজে নিন।';
+  if (window.isSecureContext === false || location.protocol === 'file:'){
+    statusLine.textContent = 'লাইভ লোকেশনের জন্য অ্যাপটি HTTPS লিংক/হোস্টেড সাইট থেকে খুলুন; file থেকে খোলা HTML-এ ব্রাউজার লোকেশন বন্ধ রাখে।';
     return;
   }
   locateBtn.textContent = 'লোকেশন খোঁজা হচ্ছে...';
+  locateBtn.disabled = true;
+  statusLine.textContent = 'আপনার ফোনের লোকেশন অনুমতি চাইছে...';
   navigator.geolocation.getCurrentPosition(
     pos => {
       const {latitude, longitude} = pos.coords;
       liveLocationOn = true;
       locateBtn.textContent = '📍 লাইভ লোকেশন চালু আছে';
       locateBtn.classList.add('on');
+      locateBtn.disabled = false;
       const label = `আপনার লাইভ অবস্থান (${latitude.toFixed(2)}, ${longitude.toFixed(2)})`;
       useCoords(latitude, longitude, label);
       saveLocationToStorage(latitude, longitude, label, true);
@@ -579,9 +584,15 @@ function requestLiveLocation(){
     },
     err => {
       locateBtn.textContent = '📍 লাইভ লোকেশন চালু করুন';
-      statusLine.textContent = 'লোকেশন পাওয়া যায়নি — নিচে শহরের নাম লিখে সরাসরি খুঁজে নিন।';
+      locateBtn.disabled = false;
+      const messages = {
+        1: 'লোকেশন অনুমতি দেওয়া হয়নি — ব্রাউজার/ফোনের Location permission চালু করে আবার চাপুন।',
+        2: 'লোকেশন পাওয়া যায়নি — ফোনের GPS/Location চালু করে আবার চেষ্টা করুন।',
+        3: 'লোকেশন পেতে বেশি সময় লাগছে — GPS/Location চালু করে আবার চেষ্টা করুন।'
+      };
+      statusLine.textContent = messages[err.code] || 'লোকেশন পাওয়া যায়নি — নিচে শহরের নাম লিখে সরাসরি খুঁজে নিন।';
     },
-    { enableHighAccuracy:true, timeout:10000 }
+    { enableHighAccuracy:true, timeout:20000, maximumAge:60000 }
   );
 }
 
@@ -613,11 +624,18 @@ async function searchCity(){
       statusLine.textContent = 'কোনো জায়গা পাওয়া যায়নি, অন্যভাবে লিখে দেখুন।';
       return;
     }
+    const seenLabels = new Set();
     data.results.forEach(place => {
       const item = document.createElement('div');
       item.className = 'search-result-item';
-      const parts = [place.name, place.admin1, place.country].filter(Boolean);
-      item.textContent = parts.join(', ');
+      // Open-Meteo returns the district in admin2. Including it prevents
+      // different Dumuria results from looking like the same place.
+      const parts = [place.name, place.admin2, place.admin1, place.country].filter(Boolean);
+      const label = parts.join(', ');
+      const labelKey = label.toLocaleLowerCase();
+      if (seenLabels.has(labelKey)) return;
+      seenLabels.add(labelKey);
+      item.textContent = label;
       item.addEventListener('click', () => {
         liveLocationOn = false;
         locateBtn.textContent = '📍 লাইভ লোকেশন চালু করুন';
@@ -625,7 +643,6 @@ async function searchCity(){
         searchResults.innerHTML = '';
         cityInput.value = '';
         locationTZ = place.timezone || locationTZ;
-        const label = parts.join(', ');
         useCoords(place.latitude, place.longitude, label);
         saveLocationToStorage(place.latitude, place.longitude, label, false);
         collapseLocationSetup();
@@ -650,19 +667,33 @@ document.getElementById('mapsToggle').addEventListener('click', () => {
 });
 
 document.getElementById('openMapsBtn').addEventListener('click', () => {
-  window.location.href = 'https://www.google.com/maps';
+  // geo: lets Android hand the request to the installed Google Maps app.
+  // The web URL is a fallback for browsers/devices without the app.
+  const nativeMapsUrl = 'geo:0,0?q=' + encodeURIComponent('Bangladesh');
+  const webMapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent('Bangladesh');
+  window.location.href = nativeMapsUrl;
+  setTimeout(() => {
+    if (!document.hidden) window.open(webMapsUrl, '_blank', 'noopener');
+  }, 900);
 });
 
 function extractLatLon(text){
+  const decoded = decodeURIComponent(text.replace(/\+/g, ' '));
   const patterns = [
-    /@(-?\d+\.\d+),(-?\d+\.\d+)/,        // .../@23.81,90.41,15z
-    /[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/,   // ?q=23.81,90.41
-    /[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/,  // ?ll=23.81,90.41
-    /^\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*$/  // plain "23.81, 90.41"
+    /@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,          // .../@23.81,90.41,15z
+    /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/,         // Google Maps data link
+    /[?&](?:q|query|ll|destination)=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
+    /\/(?:place\/)?(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
+    /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/
   ];
   for (const p of patterns){
-    const m = text.match(p);
-    if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
+    const m = decoded.match(p);
+    if (m){
+      const lat = parseFloat(m[1]), lon = parseFloat(m[2]);
+      if (lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180){
+        return { lat, lon };
+      }
+    }
   }
   return null;
 }
@@ -673,18 +704,8 @@ async function setFromMapsPaste(){
 
   let coords = extractLatLon(raw);
 
-  // Shortened links (maps.app.goo.gl) don't contain coordinates directly —
-  // try following the redirect to read the final URL.
-  if (!coords && /^https?:\/\//.test(raw)){
-    statusLine.textContent = 'লিংক থেকে লোকেশন বের করা হচ্ছে...';
-    try{
-      const res = await fetch(raw, { redirect: 'follow' });
-      coords = extractLatLon(res.url);
-    }catch(e){ /* fall through to error message below */ }
-  }
-
   if (!coords){
-    statusLine.textContent = 'এই লিংক থেকে লোকেশন বোঝা যায়নি — পূর্ণ Maps লিংক (@lat,lng সহ) বা "lat, lng" আকারে কোঅর্ডিনেট পেস্ট করুন।';
+    statusLine.textContent = 'লোকেশন বোঝা যায়নি — Maps থেকে কোঅর্ডিনেট কপি করে “22.795, 89.420” এভাবে পেস্ট করুন। সংক্ষিপ্ত maps.app.goo.gl লিংক নয়।';
     return;
   }
 

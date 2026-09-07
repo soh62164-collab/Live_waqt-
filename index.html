@@ -563,8 +563,14 @@ function requestLiveLocation(){
     statusLine.textContent = 'এই ব্রাউজারে লোকেশন সাপোর্ট নেই — নিচে শহরের নাম লিখে খুঁজুন।';
     return;
   }
-  if (window.isSecureContext === false || location.protocol === 'file:'){
-    statusLine.textContent = 'লাইভ লোকেশনের জন্য অ্যাপটি HTTPS লিংক/হোস্টেড সাইট থেকে খুলুন; file থেকে খোলা HTML-এ ব্রাউজার লোকেশন বন্ধ রাখে।';
+  // Android WebView apps often load this file from file://. Let the native
+  // WebView handle its permission instead of blocking the request here.
+  const isEmbeddedAndroidApp = /; wv\)|Android.*Version\/[\d.]+.*Chrome\/[\d.]+ Mobile/i.test(navigator.userAgent)
+    || location.protocol === 'file:'
+    || !!window.Android
+    || !!window.ReactNativeWebView;
+  if (window.isSecureContext === false && !isEmbeddedAndroidApp){
+    statusLine.textContent = 'লাইভ লোকেশনের জন্য HTTPS লিংক থেকে পেজটি খুলুন।';
     return;
   }
   locateBtn.textContent = 'লোকেশন খোঁজা হচ্ছে...';
@@ -667,14 +673,11 @@ document.getElementById('mapsToggle').addEventListener('click', () => {
 });
 
 document.getElementById('openMapsBtn').addEventListener('click', () => {
-  // geo: lets Android hand the request to the installed Google Maps app.
-  // The web URL is a fallback for browsers/devices without the app.
-  const nativeMapsUrl = 'geo:0,0?q=' + encodeURIComponent('Bangladesh');
+  // A geo: URL is rejected by many Android WebViews as
+  // ERR_UNKNOWN_URL_SCHEME. Use a normal HTTPS Maps URL so it works both in
+  // the browser and inside the app's WebView.
   const webMapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent('Bangladesh');
-  window.location.href = nativeMapsUrl;
-  setTimeout(() => {
-    if (!document.hidden) window.open(webMapsUrl, '_blank', 'noopener');
-  }, 900);
+  window.location.assign(webMapsUrl);
 });
 
 function extractLatLon(text){

@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>লাইভ ওয়াক্ত</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-512.png">
+<meta name="theme-color" content="#0a1a2b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="লাইভ ওয়াক্ত">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#0a1a2b;
+    --bg-mid:#122840;
+    --bg-panel:#132c46;
+    --gold:#c9a227;
+    --gold-soft:rgba(201,162,39,0.28);
+    --sun:#e08a3c;
+    --text:#f3ecd9;
+    --text-muted:#7e93a7;
+    --line:rgba(201,162,39,0.22);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse 120% 60% at 50% -10%, #1c3958 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-mid) 55%, var(--bg-deep) 100%);
+    font-family:'Hind Siliguri', sans-serif;
+    color:var(--text);
+    display:flex;
+    justify-content:center;
+    padding:calc(28px + env(safe-area-inset-top, 0px)) 16px calc(60px + env(safe-area-inset-bottom, 0px));
+    min-height:100vh;
+    min-height:100dvh;
+  }
+  .app{
+    width:100%;
+    max-width:440px;
+  }
+  .eyebrow{
+    text-align:center;
+    color:var(--text-muted);
+    font-size:14px;
+    letter-spacing:0.02em;
+    margin-bottom:4px;
+  }
+  h1{
+    text-align:center;
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:26px;
+    margin:0 0 26px;
+    color:var(--text);
+  }
+  .hero{
+    text-align:center;
+    padding:22px 10px 26px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:20px;
+  }
+  .clock{
+    font-family:'Fraunces', serif;
+    font-weight:400;
+    font-variant-numeric:tabular-nums;
+    font-size:50px;
+    line-height:1;
+    letter-spacing:0.01em;
+    color:var(--gold);
+  }
+  .clock-label{
+    margin-top:8px;
+    font-size:14px;
+    color:var(--text-muted);
+  }
+  .date-line{
+    margin-top:6px;
+    font-size:15px;
+    color:var(--text);
+    opacity:0.85;
+  }
+  .place{
+    text-align:center;
+    font-size:13px;
+    color:var(--text-muted);
+    margin-top:8px;
+  }
+
+  .sun-row{
+    display:flex;
+    justify-content:space-around;
+    padding:18px 10px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:6px;
+  }
+  .sun-item{ text-align:center; }
+  .sun-item .icon{ font-size:20px; color:var(--sun); }
+  .sun-item .label{ font-size:13px; color:var(--text-muted); margin-top:4px; }
+  .sun-item .time{ font-family:'Fraunces', serif; font-size:20px; margin-top:2px; font-variant-numeric:tabular-nums; }
+
+  .waqt-list{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    margin-top:10px;
+  }
+  .waqt-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px 14px;
+    border-radius:2px;
+  }
+  .waqt-row.active{
+    background:var(--gold-soft);
+    border-left:3px solid var(--gold);
+  }
+  .waqt-name{ font-size:17px; }
+  .waqt-row.active .waqt-name{ color:var(--gold); font-weight:600; }
+  .waqt-range{ font-family:'Fraunces', serif; font-variant-numeric:tabular-nums; font-size:14.5px; color:var(--text); text-align:right; }
+  .waqt-countdown{ display:block; font-family:'Hind Siliguri', sans-serif; font-size:12px; color:var(--gold); margin-top:2px; }
+
+  .footer{
+    margin-top:26px;
+    text-align:center;
+  }
+  .refresh-btn{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:'Hind Siliguri', sans-serif;
+    font-size:14px;
+    padding:10px 18px;
+    border-radius:4px;
+    cursor:pointer;
+  }
+  .refresh-btn:active{ background:var(--gold-soft); }
+  .locate-btn{
+    background:var(--gold);
+    border:none;
+    color:var(--bg-deep);
+    font-family:'Hind Siliguri', sans-serif;
+    font-weight:600;
+    font-size:15px;
+    padding:12px 22px;
+    border-radius:4px;
+    cursor:pointer;
+    margin-top:14px;
+  }
+  .locate-btn:active{ opacity:0.85; }
+  .locate-btn.on{
+    background:transparent;
+    border:1px solid var(--gold);
+    color:var(--gold);
+    font-weight:500;
+  }
+  .location-toggle{
+    background:none;
+    border:none;
+    color:var(--gold);
+    font-family:'Hind Siliguri', sans-serif;
+    font-size:13px;
+    text-decoration:underline;
+    cursor:pointer;
+    padding:6px 0;
+    display:none;
+  }
+  .location-toggle.visible{ display:inline-block; }
+  .location-setup{
+    display:block;
+  }
+  .location-setup.collapsed{
+    display:none;
+  }
+  .or-line{
+    margin:16px 0 10px;
+    font-size:12.5px;
+    color:var(--text-muted);
+  }
+  .search-box{
+    display:flex;
+    gap:8px;
+    max-width:360px;
+    margin:0 auto;
+  }
+  .search-box input{
+    flex:1;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:'Hind Siliguri', sans-serif;
+    font-size:14px;
+    padding:10px 12px;
+    border-radius:4px;
+  }
+  .search-box input::placeholder{ color:var(--text-muted); }
+  .search-box button{
+    background:transparent;
+    border:1px solid var(--gold);
+    color:var(--gold);
+    font-family:'Hind Siliguri', sans-serif;
+    font-size:14px;
+    padding:10px 16px;
+    border-radius:4px;
+    cursor:pointer;
+  }
+  .search-results{
+    max-width:360px;
+    margin:10px auto 0;
+    text-align:left;
+  }
+  .search-result-item{
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-top:none;
+    font-size:14px;
+    cursor:pointer;
+    background:var(--bg-panel);
+  }
+  .search-result-item:first-child{ border-top:1px solid var(--line); border-radius:4px 4px 0 0; }
+  .search-result-item:last-child{ border-radius:0 0 4px 4px; }
+  .search-result-item:active{ background:var(--gold-soft); }
+  .maps-flow{
+    max-width:360px;
+    margin:18px auto 0;
+    padding-top:16px;
+    border-top:1px solid var(--line);
+  }
+  .maps-toggle{
+    background:none;
+    border:none;
+    color:var(--gold);
+    font-family:'Hind Siliguri', sans-serif;
+    font-size:13px;
+    text-decoration:underline;
+    cursor:pointer;
+    padding:4px 0;
+  }
+  .maps-content{
+    display:none;
+    margin-top:12px;
+  }
+  .maps-content.open{
+    display:block;
+  }
+  .maps-btn{
+    display:block;
+    width:100%;
+    text-align:center;
+    text-decoration:none;
+    background:transparent;
+    border:1px solid var(--gold);
+    color:var(--gold);
+    font-family:'Hind Siliguri', sans-serif;
+    font-size:14px;
+    padding:10px 16px;
+    border-radius:4px;
+    cursor:pointer;
+  }
+  .maps-btn:active{ background:var(--gold-soft); }
+  .maps-steps{
+    text-align:left;
+    font-size:12.5px;
+    color:var(--text-muted);
+    margin:10px 0;
+    padding-left:18px;
+  }
+  .maps-steps li{ margin-bottom:4px; }
+  .paste-row{
+    display:flex;
+    gap:8px;
+  }
+  .paste-row input{
+    flex:1;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:'Hind Siliguri', sans-serif;
+    font-size:13px;
+    padding:10px 12px;
+    border-radius:4px;
+  }
+  .paste-row input::placeholder{ color:var(--text-muted); }
+  .paste-row button{
+    background:var(--gold);
+    border:none;
+    color:var(--bg-deep);
+    font-family:'Hind Siliguri', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:10px 14px;
+    border-radius:4px;
+    cursor:pointer;
+  }
+  .status{
+    text-align:center;
+    font-size:12.5px;
+    color:var(--text-muted);
+    margin-top:10px;
+    min-height:16px;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="eyebrow">লাইভ ওয়াক্ত</div>
+  <h1>সময়, ওয়াক্ত ও সূর্যের হিসাব</h1>
+
+  <div class="hero">
+    <div class="clock" id="mainClock">--:--:--</div>
+    <div class="clock-label">অবস্থানের সময়</div>
+    <div class="date-line" id="mainDate"></div>
+
+    <div class="place" id="placeLabel">এখন পর্যন্ত ঢাকার সময় দেখানো হচ্ছে</div>
+    <button class="location-toggle" id="locationToggle">অবস্থান পরিবর্তন করুন</button>
+
+    <div class="location-setup" id="locationSetup">
+      <button class="locate-btn" id="locateBtn">📍 লাইভ লোকেশন চালু করুন</button>
+
+      <div class="or-line">অথবা শহরের নাম লিখে সরাসরি অবস্থান বেছে নিন</div>
+      <div class="search-box">
+        <input type="text" id="cityInput" placeholder="যেমন: Dumuria, Khulna">
+        <button id="searchBtn">খুঁজুন</button>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+
+      <div class="maps-flow">
+        <button class="maps-toggle" id="mapsToggle">গুগল ম্যাপ ব্যবহার করে লোকেশন দিতে চাইলে এখানে ট্যাপ করুন</button>
+        <div class="maps-content" id="mapsContent">
+          <a class="maps-btn" id="openMapsBtn" href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer">🗺️ Google Maps খুলুন এবং পিন বসান</a>
+          <ol class="maps-steps">
+            <li>Maps-এ যেখানে চান সেখানে চেপে ধরে পিন বসান</li>
+            <li>নিচে ভেসে ওঠা জায়গার নামে ট্যাপ করে "শেয়ার" চাপুন এবং লিংক কপি করুন (অথবা কোঅর্ডিনেট কপি করুন)</li>
+            <li>ফোনের <strong>Back বাটনে</strong> চেপে এই অ্যাপে ফিরে আসুন</li>
+            <li>নিচের বক্সে পেস্ট করে "সেট করুন" চাপুন</li>
+          </ol>
+          <div class="or-line" style="margin-top:0;">এই অ্যাপে Maps না খুললে, ফোনের হোম বাটনে গিয়ে সাধারণ Chrome অ্যাপ দিয়ে Google Maps খুলুন, পিন বসিয়ে কোঅর্ডিনেট কপি করে এই অ্যাপে ফিরে এসে নিচে পেস্ট করুন।</div>
+          <div class="paste-row">
+            <input type="text" id="mapsPasteInput" placeholder="Maps লিংক বা কোঅর্ডিনেট পেস্ট করুন">
+          <button id="mapsPasteBtn">সেট করুন</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div class="sun-row">
+    <div class="sun-item">
+      <div class="icon">☀</div>
+      <div class="label">সূর্যোদয়</div>
+      <div class="time" id="sunriseTime">--:--</div>
+    </div>
+    <div class="sun-item">
+      <div class="icon">☾</div>
+      <div class="label">সূর্যাস্ত</div>
+      <div class="time" id="sunsetTime">--:--</div>
+    </div>
+  </div>
+
+  <div class="waqt-list" id="waqtList">
+    <!-- filled by JS -->
+  </div>
+
+  <div class="footer">
+    <button class="refresh-btn" id="refreshBtn">ওয়াক্তের সময় রিফ্রেশ করুন</button>
+    <div class="status" id="statusLine"></div>
+  </div>
+</div>
+
+<script>
+const WAQT_NAMES = {
+  Fajr: 'ফজর',
+  Dhuhr: 'যোহর',
+  Asr: 'আসর',
+  Maghrib: 'মাগরিব',
+  Isha: 'এশা'
+};
+
+let locationTZ = 'Asia/Dhaka';
+let timings = null; // {Fajr, Sunrise, Dhuhr, Asr, Sunset, Maghrib, Isha}
+let placeCoords = null;
+
+const statusLine = document.getElementById('statusLine');
+const placeLabel = document.getElementById('placeLabel');
+
+function pad(n){ return n.toString().padStart(2,'0'); }
+
+function clockPartsForTZ(tz){
+  const now = new Date();
+  const fmt = new Intl.DateTimeFormat('en-GB', {
+    timeZone: tz, hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
+  });
+  const parts = fmt.formatToParts(now);
+  const get = t => parts.find(p=>p.type===t).value;
+  const h24 = Number(get('hour'));
+  const ampm = h24 < 12 ? 'AM' : 'PM';
+  let h12 = h24 % 12; if (h12 === 0) h12 = 12;
+  return { h:get('hour'), m:get('minute'), s:get('second'), h12:pad(h12), ampm };
+}
+
+function minutesFromHHMM(str){
+  const clean = str.split(' ')[0].trim();
+  const [h,m] = clean.split(':').map(Number);
+  return h*60+m;
+}
+
+function fmtFromMinutes(mins){
+  mins = ((mins % 1440)+1440)%1440;
+  const h = Math.floor(mins/60), m = mins%60;
+  const ampm = h < 12 ? 'AM' : 'PM';
+  let h12 = h % 12; if (h12 === 0) h12 = 12;
+  return pad(h12)+':'+pad(m)+' '+ampm;
+}
+
+let lastFetchedDate = null;
+
+function dateStringForTZ(tz){
+  return new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date());
+}
+
+function updateClocks(){
+  const loc = clockPartsForTZ(locationTZ);
+  document.getElementById('mainClock').textContent = `${loc.h12}:${loc.m}:${loc.s} ${loc.ampm}`;
+
+  const dateFmt = new Intl.DateTimeFormat('bn-BD', { timeZone: locationTZ, weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  document.getElementById('mainDate').textContent = dateFmt.format(new Date());
+
+  // If the calendar date has rolled over in the selected location since we
+  // last fetched, pull that day's timings automatically — no reopen needed.
+  const todayStr = dateStringForTZ(locationTZ);
+  if (timings && lastFetchedDate && todayStr !== lastFetchedDate && placeCoords){
+    fetchTimings(placeCoords.lat, placeCoords.lon);
+  }
+
+  if (timings) renderWaqtList();
+}
+
+function renderWaqtList(){
+  const order = ['Fajr','Dhuhr','Asr','Maghrib','Isha'];
+  const starts = {};
+  order.forEach(k => starts[k] = minutesFromHHMM(timings[k]));
+  const sunrise = minutesFromHHMM(timings.Sunrise);
+
+  const ranges = [
+    { key:'Fajr', start: starts.Fajr, end: sunrise },
+    { key:'Dhuhr', start: starts.Dhuhr, end: starts.Asr },
+    { key:'Asr', start: starts.Asr, end: starts.Maghrib },
+    { key:'Maghrib', start: starts.Maghrib, end: starts.Isha },
+    { key:'Isha', start: starts.Isha, end: starts.Fajr + 1440 }
+  ];
+
+  const nowParts = clockPartsForTZ(locationTZ);
+  let nowMin = Number(nowParts.h)*60 + Number(nowParts.m);
+  // handle the window after midnight but before Fajr, still "within" Isha from yesterday
+  let nowMinExtended = nowMin < starts.Fajr ? nowMin + 1440 : nowMin;
+
+  const list = document.getElementById('waqtList');
+  list.innerHTML = '';
+
+  ranges.forEach(r => {
+    const isActive = nowMinExtended >= r.start && nowMinExtended < r.end;
+    const row = document.createElement('div');
+    row.className = 'waqt-row' + (isActive ? ' active' : '');
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'waqt-name';
+    nameEl.textContent = WAQT_NAMES[r.key];
+
+    const rangeEl = document.createElement('div');
+    rangeEl.className = 'waqt-range';
+    rangeEl.textContent = `${fmtFromMinutes(r.start)} – ${fmtFromMinutes(r.end)}`;
+
+    if (isActive){
+      const remaining = r.end - nowMinExtended;
+      const h = Math.floor(remaining/60), m = remaining%60;
+      const cd = document.createElement('span');
+      cd.className = 'waqt-countdown';
+      cd.textContent = `শেষ হতে ${h>0? h+' ঘ ':''}${m} মি বাকি`;
+      rangeEl.appendChild(cd);
+    }
+
+    row.appendChild(nameEl);
+    row.appendChild(rangeEl);
+    list.appendChild(row);
+  });
+}
+
+async function fetchTimings(lat, lon){
+  statusLine.textContent = 'ওয়াক্তের সময় হিসাব করা হচ্ছে...';
+  const ts = Math.floor(Date.now()/1000);
+  const url = `https://api.aladhan.com/v1/timings/${ts}?latitude=${lat}&longitude=${lon}&method=1`;
+  try{
+    const res = await fetch(url);
+    const data = await res.json();
+    timings = data.data.timings;
+    locationTZ = data.data.meta.timezone || 'Asia/Dhaka';
+    lastFetchedDate = dateStringForTZ(locationTZ);
+    document.getElementById('sunriseTime').textContent = fmtFromMinutes(minutesFromHHMM(timings.Sunrise));
+    document.getElementById('sunsetTime').textContent = fmtFromMinutes(minutesFromHHMM(timings.Sunset || timings.Maghrib));
+    statusLine.textContent = '';
+    renderWaqtList();
+  }catch(err){
+    statusLine.textContent = 'ওয়াক্তের তথ্য আনতে সমস্যা হয়েছে, আবার চেষ্টা করুন।';
+  }
+}
+
+let liveLocationOn = false;
+const locateBtn = document.getElementById('locateBtn');
+const locationToggle = document.getElementById('locationToggle');
+const locationSetup = document.getElementById('locationSetup');
+const STORAGE_KEY = 'liveWaqtSavedLocation';
+
+function saveLocationToStorage(lat, lon, label, isLive){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ lat, lon, label, isLive }));
+  }catch(e){ /* storage may be unavailable, app still works without persistence */ }
+}
+
+function loadSavedLocation(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+
+function collapseLocationSetup(){
+  locationSetup.classList.add('collapsed');
+  locationToggle.classList.add('visible');
+  locationToggle.textContent = 'অবস্থান পরিবর্তন করুন';
+}
+
+function expandLocationSetup(){
+  locationSetup.classList.remove('collapsed');
+  locationToggle.textContent = 'বাতিল করুন';
+}
+
+locationToggle.addEventListener('click', () => {
+  if (locationSetup.classList.contains('collapsed')) expandLocationSetup();
+  else collapseLocationSetup();
+});
+
+function useCoords(lat, lon, label){
+  placeCoords = {lat, lon};
+  placeLabel.textContent = label;
+  fetchTimings(lat, lon);
+}
+
+// Runs immediately on load with Dhaka's coordinates, so the app is useful
+// right away without asking for any permission.
+function loadDefault(){
+  useCoords(23.8103, 90.4125, 'ঢাকা, বাংলাদেশ (ডিফল্ট)');
+}
+
+// Only runs when the person taps the button — geolocation permission
+// prompts are far more reliable when triggered by a direct tap.
+function requestLiveLocation(){
+  if (!navigator.geolocation){
+    statusLine.textContent = 'এই ব্রাউজারে লোকেশন সাপোর্ট নেই — নিচে শহরের নাম লিখে খুঁজুন।';
+    return;
+  }
+  if (window.isSecureContext === false){
+    statusLine.textContent = 'এই পেজ থেকে সরাসরি লোকেশন কাজ নাও করতে পারে — নিচে শহরের নাম লিখে খুঁজে নিন।';
+    return;
+  }
+  locateBtn.textContent = 'লোকেশন খোঁজা হচ্ছে...';
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const {latitude, longitude} = pos.coords;
+      liveLocationOn = true;
+      locateBtn.textContent = '📍 লাইভ লোকেশন চালু আছে';
+      locateBtn.classList.add('on');
+      const label = `আপনার লাইভ অবস্থান (${latitude.toFixed(2)}, ${longitude.toFixed(2)})`;
+      useCoords(latitude, longitude, label);
+      saveLocationToStorage(latitude, longitude, label, true);
+      collapseLocationSetup();
+    },
+    err => {
+      locateBtn.textContent = '📍 লাইভ লোকেশন চালু করুন';
+      let msg;
+      if (err.code === 1){
+        msg = 'এই অ্যাপকে লোকেশনের অনুমতি দেওয়া নেই। ফোনের Settings → Apps → এই অ্যাপ → Permissions-এ গিয়ে Location চালু করে আবার চেষ্টা করুন।';
+      } else if (err.code === 2){
+        msg = 'ফোনের GPS/লোকেশন সার্ভিস বন্ধ থাকতে পারে — সেটা চালু করে আবার চেষ্টা করুন।';
+      } else if (err.code === 3){
+        msg = 'লোকেশন খুঁজতে বেশি সময় লেগে যাচ্ছে — আবার চেষ্টা করুন।';
+      } else {
+        msg = 'লোকেশন পাওয়া যায়নি।';
+      }
+      statusLine.textContent = msg + ' এর মধ্যে নিচে শহরের নাম লিখে সরাসরি খুঁজে নিতে পারেন।';
+    },
+    { enableHighAccuracy:true, timeout:10000 }
+  );
+}
+
+function refreshData(){
+  if (liveLocationOn){
+    requestLiveLocation();
+  } else if (placeCoords){
+    fetchTimings(placeCoords.lat, placeCoords.lon);
+  } else {
+    loadDefault();
+  }
+}
+
+const cityInput = document.getElementById('cityInput');
+const searchBtn = document.getElementById('searchBtn');
+const searchResults = document.getElementById('searchResults');
+
+async function searchCity(){
+  const q = cityInput.value.trim();
+  if (!q) return;
+  searchResults.innerHTML = '';
+  statusLine.textContent = 'খোঁজা হচ্ছে...';
+  try{
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=10&language=en&format=json`;
+    const res = await fetch(url);
+    const data = await res.json();
+    statusLine.textContent = '';
+    if (!data.results || data.results.length === 0){
+      statusLine.textContent = 'কোনো জায়গা পাওয়া যায়নি, অন্যভাবে লিখে দেখুন।';
+      return;
+    }
+
+    const seenLabels = new Set();
+    let shown = 0;
+
+    data.results.forEach(place => {
+      // name, district (admin2), division/state (admin1), country
+      const parts = [place.name, place.admin2, place.admin1, place.country].filter(Boolean);
+      const label = parts.join(', ');
+
+      // skip exact-duplicate labels (same place returned more than once)
+      if (seenLabels.has(label)) return;
+      seenLabels.add(label);
+      if (shown >= 6) return; // cap how many we actually display
+      shown++;
+
+      const item = document.createElement('div');
+      item.className = 'search-result-item';
+      item.textContent = label;
+      item.addEventListener('click', () => {
+        liveLocationOn = false;
+        locateBtn.textContent = '📍 লাইভ লোকেশন চালু করুন';
+        locateBtn.classList.remove('on');
+        searchResults.innerHTML = '';
+        cityInput.value = '';
+        locationTZ = place.timezone || locationTZ;
+        useCoords(place.latitude, place.longitude, label);
+        saveLocationToStorage(place.latitude, place.longitude, label, false);
+        collapseLocationSetup();
+      });
+      searchResults.appendChild(item);
+    });
+
+    if (shown === 0){
+      statusLine.textContent = 'কোনো জায়গা পাওয়া যায়নি, অন্যভাবে লিখে দেখুন।';
+    }
+  }catch(err){
+    statusLine.textContent = 'খুঁজতে সমস্যা হয়েছে, আবার চেষ্টা করুন।';
+  }
+}
+
+searchBtn.addEventListener('click', searchCity);
+cityInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchCity(); });
+
+document.getElementById('mapsToggle').addEventListener('click', () => {
+  const content = document.getElementById('mapsContent');
+  const toggle = document.getElementById('mapsToggle');
+  const isOpen = content.classList.toggle('open');
+  toggle.textContent = isOpen
+    ? 'লুকিয়ে ফেলুন'
+    : 'গুগল ম্যাপ ব্যবহার করে লোকেশন দিতে চাইলে এখানে ট্যাপ করুন';
+});
+
+function extractLatLon(text){
+  const patterns = [
+    /@(-?\d+\.\d+),(-?\d+\.\d+)/,        // .../@23.81,90.41,15z
+    /[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/,   // ?q=23.81,90.41
+    /[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/,  // ?ll=23.81,90.41
+    /^\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*$/  // plain "23.81, 90.41"
+  ];
+  for (const p of patterns){
+    const m = text.match(p);
+    if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
+  }
+  return null;
+}
+
+async function setFromMapsPaste(){
+  const raw = document.getElementById('mapsPasteInput').value.trim();
+  if (!raw) return;
+
+  let coords = extractLatLon(raw);
+
+  // Shortened links (maps.app.goo.gl) don't contain coordinates directly —
+  // try following the redirect to read the final URL.
+  if (!coords && /^https?:\/\//.test(raw)){
+    statusLine.textContent = 'লিংক থেকে লোকেশন বের করা হচ্ছে...';
+    try{
+      const res = await fetch(raw, { redirect: 'follow' });
+      coords = extractLatLon(res.url);
+    }catch(e){ /* fall through to error message below */ }
+  }
+
+  if (!coords){
+    statusLine.textContent = 'এই লিংক থেকে লোকেশন বোঝা যায়নি — পূর্ণ Maps লিংক (@lat,lng সহ) বা "lat, lng" আকারে কোঅর্ডিনেট পেস্ট করুন।';
+    return;
+  }
+
+  liveLocationOn = false;
+  locateBtn.textContent = '📍 লাইভ লোকেশন চালু করুন';
+  locateBtn.classList.remove('on');
+  document.getElementById('mapsPasteInput').value = '';
+  statusLine.textContent = '';
+  const label = `Google Maps থেকে বাছাই করা অবস্থান (${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)})`;
+  useCoords(coords.lat, coords.lon, label);
+  saveLocationToStorage(coords.lat, coords.lon, label, false);
+  collapseLocationSetup();
+}
+
+document.getElementById('mapsPasteBtn').addEventListener('click', setFromMapsPaste);
+document.getElementById('mapsPasteInput').addEventListener('keydown', e => { if (e.key === 'Enter') setFromMapsPaste(); });
+
+locateBtn.addEventListener('click', requestLiveLocation);
+document.getElementById('refreshBtn').addEventListener('click', refreshData);
+
+const saved = loadSavedLocation();
+if (saved){
+  liveLocationOn = !!saved.isLive;
+  if (liveLocationOn){
+    locateBtn.textContent = '📍 লাইভ লোকেশন চালু আছে';
+    locateBtn.classList.add('on');
+  }
+  useCoords(saved.lat, saved.lon, saved.label);
+  collapseLocationSetup();
+} else {
+  loadDefault();
+}
+updateClocks();
+setInterval(updateClocks, 1000);
+
+if ('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>

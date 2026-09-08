@@ -1,0 +1,24 @@
+{
+  "name": "লাইভ ওয়াক্ত",
+  "short_name": "লাইভ ওয়াক্ত",
+  "description": "লাইভ সময়, পাঁচ ওয়াক্ত নামাজের সময়সূচি ও সূর্যোদয়-সূর্যাস্ত",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a1a2b",
+  "theme_color": "#0a1a2b",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

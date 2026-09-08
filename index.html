@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-512.png">
-<meta name="theme-color" content="#0a1a2b">
+<meta name="theme-color" content="#071320">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="লাইভ ওয়াক্ত">
@@ -15,23 +15,35 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg-deep:#0a1a2b;
-    --bg-mid:#122840;
-    --bg-panel:#132c46;
-    --gold:#c9a227;
-    --gold-soft:rgba(201,162,39,0.28);
-    --sun:#e08a3c;
-    --text:#f3ecd9;
-    --text-muted:#7e93a7;
-    --line:rgba(201,162,39,0.22);
+    --bg-deep:#071320;
+    --bg-mid:#102847;
+    --bg-panel:#0d2038;
+    --bg-glow:rgba(34,75,133,0.55);
+    --gold:#a6d3de;
+    --gold-soft:rgba(166,211,222,0.18);
+    --gold-dim:rgba(166,211,222,0.6);
+    --on-gold:#071320;
+    --teal:#648fb2;
+    --teal-soft:rgba(100,143,178,0.3);
+    --sun:#dd8a44;
+    --text:#eef4f8;
+    --text-muted:#7f93ab;
+    --line:rgba(166,211,222,0.22);
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
     min-height:100vh;
     background:
-      radial-gradient(ellipse 120% 60% at 50% -10%, #1c3958 0%, transparent 60%),
+      radial-gradient(1.5px 1.5px at 15% 12%, rgba(244,238,218,0.5) 0%, transparent 60%),
+      radial-gradient(1px 1px at 78% 8%, rgba(244,238,218,0.4) 0%, transparent 60%),
+      radial-gradient(1.5px 1.5px at 88% 22%, rgba(244,238,218,0.35) 0%, transparent 60%),
+      radial-gradient(1px 1px at 40% 5%, rgba(244,238,218,0.3) 0%, transparent 60%),
+      radial-gradient(1.5px 1.5px at 60% 16%, rgba(244,238,218,0.3) 0%, transparent 60%),
+      radial-gradient(1px 1px at 25% 26%, rgba(244,238,218,0.25) 0%, transparent 60%),
+      radial-gradient(ellipse 120% 55% at 50% -8%, var(--bg-glow) 0%, transparent 62%),
       linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-mid) 55%, var(--bg-deep) 100%);
+    background-repeat: no-repeat;
     font-family:'Hind Siliguri', sans-serif;
     color:var(--text);
     display:flex;
@@ -61,9 +73,8 @@
   }
   .hero{
     text-align:center;
-    padding:22px 10px 26px;
-    border-bottom:1px solid var(--line);
-    margin-bottom:20px;
+    padding:22px 10px 8px;
+    margin-bottom:0;
   }
   .clock{
     font-family:'Fraunces', serif;
@@ -92,15 +103,35 @@
     margin-top:8px;
   }
 
+  .divider{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin:22px 4px;
+  }
+  .divider::before, .divider::after{
+    content:'';
+    flex:1;
+    height:1px;
+    background:var(--line);
+  }
+  .divider .mark{
+    width:7px;
+    height:7px;
+    background:var(--gold-dim);
+    transform:rotate(45deg);
+    flex-shrink:0;
+  }
+
   .sun-row{
     display:flex;
     justify-content:space-around;
-    padding:18px 10px;
-    border-bottom:1px solid var(--line);
-    margin-bottom:6px;
+    padding:4px 10px 18px;
+    margin-bottom:0;
   }
   .sun-item{ text-align:center; }
   .sun-item .icon{ font-size:20px; color:var(--sun); }
+  .sun-item .icon.dusk{ color:var(--teal); }
   .sun-item .label{ font-size:13px; color:var(--text-muted); margin-top:4px; }
   .sun-item .time{ font-family:'Fraunces', serif; font-size:20px; margin-top:2px; font-variant-numeric:tabular-nums; }
 
@@ -115,16 +146,37 @@
     justify-content:space-between;
     align-items:center;
     padding:14px 14px;
-    border-radius:2px;
   }
   .waqt-row.active{
     background:var(--gold-soft);
     border-left:3px solid var(--gold);
   }
   .waqt-name{ font-size:17px; }
+  .waqt-mark{
+    display:inline-block;
+    width:20px;
+    color:var(--teal);
+    font-size:13px;
+    text-align:center;
+  }
+  .waqt-row.active .waqt-mark{ color:var(--gold); }
   .waqt-row.active .waqt-name{ color:var(--gold); font-weight:600; }
   .waqt-range{ font-family:'Fraunces', serif; font-variant-numeric:tabular-nums; font-size:14.5px; color:var(--text); text-align:right; }
-  .waqt-countdown{ display:block; font-family:'Hind Siliguri', sans-serif; font-size:12px; color:var(--gold); margin-top:2px; }
+  .waqt-countdown{ display:flex; align-items:center; justify-content:flex-end; gap:5px; font-family:'Hind Siliguri', sans-serif; font-size:12px; color:var(--gold); margin-top:2px; }
+  .live-dot{
+    width:5px;
+    height:5px;
+    border-radius:50%;
+    background:var(--gold);
+    animation: waqtPulse 2s ease-in-out infinite;
+  }
+  @keyframes waqtPulse{
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .live-dot{ animation: none; }
+  }
 
   .footer{
     margin-top:26px;
@@ -144,7 +196,7 @@
   .locate-btn{
     background:var(--gold);
     border:none;
-    color:var(--bg-deep);
+    color:var(--on-gold);
     font-family:'Hind Siliguri', sans-serif;
     font-weight:600;
     font-size:15px;
@@ -290,7 +342,7 @@
   .paste-row button{
     background:var(--gold);
     border:none;
-    color:var(--bg-deep);
+    color:var(--on-gold);
     font-family:'Hind Siliguri', sans-serif;
     font-weight:600;
     font-size:13px;
@@ -350,6 +402,8 @@
   </div>
   </div>
 
+  <div class="divider"><span class="mark"></span></div>
+
   <div class="sun-row">
     <div class="sun-item">
       <div class="icon">☀</div>
@@ -357,11 +411,13 @@
       <div class="time" id="sunriseTime">--:--</div>
     </div>
     <div class="sun-item">
-      <div class="icon">☾</div>
+      <div class="icon dusk">☾</div>
       <div class="label">সূর্যাস্ত</div>
       <div class="time" id="sunsetTime">--:--</div>
     </div>
   </div>
+
+  <div class="divider"><span class="mark"></span></div>
 
   <div class="waqt-list" id="waqtList">
     <!-- filled by JS -->
@@ -380,6 +436,14 @@ const WAQT_NAMES = {
   Asr: 'আসর',
   Maghrib: 'মাগরিব',
   Isha: 'এশা'
+};
+
+const WAQT_MARKS = {
+  Fajr: '☾',
+  Dhuhr: '☀',
+  Asr: '☀',
+  Maghrib: '◐',
+  Isha: '★'
 };
 
 let locationTZ = 'Asia/Dhaka';
@@ -470,7 +534,12 @@ function renderWaqtList(){
 
     const nameEl = document.createElement('div');
     nameEl.className = 'waqt-name';
-    nameEl.textContent = WAQT_NAMES[r.key];
+    const markEl = document.createElement('span');
+    markEl.className = 'waqt-mark';
+    markEl.textContent = WAQT_MARKS[r.key];
+    markEl.setAttribute('aria-hidden', 'true');
+    nameEl.appendChild(markEl);
+    nameEl.appendChild(document.createTextNode(WAQT_NAMES[r.key]));
 
     const rangeEl = document.createElement('div');
     rangeEl.className = 'waqt-range';
@@ -481,7 +550,10 @@ function renderWaqtList(){
       const h = Math.floor(remaining/60), m = remaining%60;
       const cd = document.createElement('span');
       cd.className = 'waqt-countdown';
-      cd.textContent = `শেষ হতে ${h>0? h+' ঘ ':''}${m} মি বাকি`;
+      const pulse = document.createElement('span');
+      pulse.className = 'live-dot';
+      cd.appendChild(pulse);
+      cd.appendChild(document.createTextNode(`শেষ হতে ${h>0? h+' ঘ ':''}${m} মি বাকি`));
       rangeEl.appendChild(cd);
     }
 
